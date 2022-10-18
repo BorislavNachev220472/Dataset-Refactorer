@@ -31,7 +31,7 @@ public class DataSetServiceImpl implements DataSetService {
         List<DataSet> ruralPopulationRaw = dataSetRepository.getRuralPopulation();
         List<DataSet> ruralSquareMetersRaw = dataSetRepository.getRuralSquareMeters();
         String[] columns = {"Country", "Year", "Total Population", "Largest City Population", "Urban Population", "Urban Square Meters"
-                , "Country Square Meters", "Rural Population", "Rural Square Meters"};
+                , "Country Square Meters", "Rural Population", "Rural Square Meters", "Population Increase"};
 
         Map<String, Map<Integer, Double>> totalPopulation = generateMap(totalPopulationRaw);
         Map<String, Map<Integer, Double>> largestCity = generateMap(largestCityPopulationRaw);
@@ -65,12 +65,14 @@ public class DataSetServiceImpl implements DataSetService {
             }
             writer.println(columnsStr);
 
+            Map<String, Double> lastPopulation = new HashMap<>();
             for (int i = 1960; i <= 2021; i++) {
 
                 Set<String> countries = maps.get(0).keySet();
 
                 for (String currCountry : countries) {
                     StringBuilder line = new StringBuilder(currCountry.replaceAll(", ", " ") + ", " + i + ", ");
+                    double currentPopulation = totalPopulation.get(currCountry).get(i);
                     for (int j = 0; j < maps.size(); j++) {
                         Double currentValue = maps.get(j).get(currCountry).get(i);
                         if (j == maps.size() - 1) {
@@ -79,7 +81,15 @@ public class DataSetServiceImpl implements DataSetService {
                         }
                         line.append(currentValue).append(", ");
                     }
-
+                    if (!lastPopulation.containsKey(currCountry)) {
+                        lastPopulation.put(currCountry, 0.0);
+                    }
+                    double change = currentPopulation - lastPopulation.get(currCountry);
+                    if (lastPopulation.get(currCountry) == 0) {
+                        change = currentPopulation;
+                    }
+                    lastPopulation.put(currCountry, currentPopulation);
+                    line.append(", ").append(change);
                     writer.println(line);
                 }
 
